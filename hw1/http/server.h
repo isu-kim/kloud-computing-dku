@@ -1,5 +1,6 @@
 #ifndef HW1_SERVER_H
 #define HW1_SERVER_H
+#pragma once
 
 // @todo implement basic socket programming with multi threading
 // @todo implement callback function
