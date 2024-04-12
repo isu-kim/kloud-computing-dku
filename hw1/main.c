@@ -1,5 +1,4 @@
-#include "utils/log/log.h"
-#include "utils/cli/cli.h"
+#include "common/log.h"
 #include "common/types.h"
 #include "common/context.h"
 #include "http/server.h"
@@ -9,11 +8,12 @@
 struct context_t *ctx;
 
 int main(int argc, char* argv[]) {
-    // Initialize context, parse command-line arguments.
+    LOG_INFO("Initializing commandline arguments");
     if (init_ctx(&ctx, argc, argv) == -1) {
         return -1;
     }
 
+    LOG_INFO("Initialized arguments");
     dump_ctx(*ctx);
 
 	return 0;

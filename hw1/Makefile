@@ -4,7 +4,7 @@ CC = gcc
 CFLAGS = -O2 -Wall -std=gnu99
 LDFLAGS =
 
-PROG = http_server
+PROG = engineX
 
 SRCDIRS := $(shell find . -type d)
 SRC := $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c))
