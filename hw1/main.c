@@ -1,5 +1,4 @@
 #include "common/log.h"
-#include "common/types.h"
 #include "common/context.h"
 #include "http/server.h"
 

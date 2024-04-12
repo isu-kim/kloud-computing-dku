@@ -8,7 +8,11 @@
 #include <stdio.h>
 
 #include "types.h"
-#include "defines.h"
+
+struct context_t {
+    uint16_t port;
+    char address[MAX_IP_STRING];
+};
 
 int init_ctx(struct context_t **ctx, int argc, char** argv);
 int dump_ctx(struct context_t ctx);
