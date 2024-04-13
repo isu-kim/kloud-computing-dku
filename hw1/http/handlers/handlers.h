@@ -17,6 +17,7 @@ extern struct context_t *ctx;
 
 int http_handler_get(struct client_info_t*, struct http_request_info_t*);
 
-int generate_http_header(struct http_request_info_t*, int, unsigned long, char*);
+int generate_http_header(int, unsigned long, char*, char*);
+int send_response_message(int, int, char*, char*);
 
 #endif //HW1_HANDLERS_H

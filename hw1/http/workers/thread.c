@@ -38,9 +38,11 @@ void* worker_func(void *target) {
             continue;
         }
 
+#ifdef DEBUG
         char method_str[HTTP_MAX_METHOD_STR] = {0};
         mtoa(req.method, (char *) method_str);
-        LOG_INFO("[Worker][%s:%d] %s %s %s", client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version);
+        LOG_DEBUG("[Worker][%s:%d] %s %s %s", client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version);
+#endif
 
         switch (req.method) {
             case http_req_get:
@@ -48,9 +50,6 @@ void* worker_func(void *target) {
                 break;
         }
     }
-
-    // gc
-    free(client_info);
 
     return NULL;
 }

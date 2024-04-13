@@ -44,8 +44,9 @@ int serve() {
             LOG_WARN("Unable to accept connection: %s", strerror(errno));
             continue;
         } else {
-            LOG_INFO("[%s:%d] New connection, assigning a new worker process", ip_str, client_addr.sin_port);
-
+#ifdef DEBUG
+            LOG_DEBUG("[%s:%d] New connection, assigning a new worker process", ip_str, client_addr.sin_port);
+#endif
             // Create client struct
             struct client_info_t *client = NULL;
             client = (struct client_info_t *)malloc(sizeof(struct client_info_t));
