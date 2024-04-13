@@ -278,6 +278,73 @@ int http_handler_update(struct client_info_t *client, struct http_request_info_t
 
 
 /**
+ * HTTP handler for DELETE
+ * @param client the client
+ * @param req the request
+ * @return -1 if failure, 0 if success
+ */
+int http_handler_delete(struct client_info_t *client, struct http_request_info_t *req) {
+    int response_code = 0;
+    int ret = 0;
+
+    if (strcmp(req->endpoint_str, "/") == 0) { // shall be 200
+        response_code = 403;
+        char payload[MAX_STRING] = {0};
+        strcat(payload, title_msg);
+        strcat(payload, "You cannot delete this !");
+        ret = send_response_message(client->fd, response_code, payload, "text");
+    } else {
+        char target_file[MAX_FILE_NAME_STR_LEN] = {0};
+        strcpy(target_file, ctx->web_files_dir);
+        strcat(target_file, req->endpoint_str);
+#ifdef DEBUG
+        LOG_DEBUG("Deleting file %s", target_file);
+#endif
+        if (!IS_EXISTING_FILE(target_file)) { // shall be 404
+            response_code = 404;
+#ifdef DEBUG
+            LOG_DEBUG("File %s does not exist: %s", target_file, strerror(errno));
+#endif
+            char msg[] =  "Not found, we don't have that file :b";
+            ret = send_response_message(client->fd, response_code, msg, "text");
+        } else if (!IS_AVAILABLE_FILE(target_file)) { // shall be 403
+            response_code = 403;
+            char msg[] = "Forbidden, guessing you don't have permissions :(";
+            ret = send_response_message(client->fd, response_code, msg, "text");
+        } else { // delete file
+            char msg[MAX_STRING] = {0};
+            if (delete_file(target_file) == 0) {
+                response_code = 200;
+                sprintf(msg, "Successfully deleted file %s", target_file);
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            } else {
+                response_code = 503;
+                sprintf(msg, "Unable to delete file %s, check log", target_file);
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            }
+        }
+    }
+
+    // generate method str
+    char method_str[HTTP_MAX_METHOD_STR] = {0};
+    mtoa(req->method, (char *) method_str);
+
+    // log accordingly
+    if (response_code / 100 == 4) { // 4xx error
+        LOG_WARN("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                 method_str, req->endpoint_str, req->http_version);
+    } else if (response_code / 100 == 5) { // 5xx error
+        LOG_ERROR("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                  method_str, req->endpoint_str, req->http_version);
+    } else { // 200 ok
+        LOG_INFO("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                 method_str, req->endpoint_str, req->http_version);
+    }
+
+    return ret;
+}
+
+/**
  * Generate basic HTTP header
  * @param response_code the response code
  * @param size the response size

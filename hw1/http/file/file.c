@@ -97,3 +97,17 @@ int write_file(char *target, char *buff, long *written){
     fclose(file);
     return 0;
 }
+
+/**
+ * File delete
+ * @param target the target file
+ * @return -1 if failure, 0 if success
+ */
+int delete_file(char *target) {
+    if (remove(target) == 0) {
+        return 0;
+    } else {
+        LOG_ERROR("Error deleting file %s: %s", target, strerror(errno));
+        return -1;
+    }
+}

@@ -84,6 +84,9 @@ void* worker_func(void *target) {
 
                 http_handler_update(client_info, &req, buff, req.content_size);
                 break;
+            case http_req_del:
+                http_handler_delete(client_info, &req);
+                break;
         }
     }
 
