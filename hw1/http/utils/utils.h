@@ -1,8 +1,9 @@
 #ifndef HW1_UTILS_H
 #define HW1_UTILS_H
 
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
+#include <stddef.h>
 
 #include "../../common/types.h"
 #include "../../common/defines.h"

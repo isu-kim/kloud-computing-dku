@@ -38,6 +38,9 @@ int parse_request_info(char *header_str, struct http_request_info_t *ret) {
     ret->method = atom(method_str);
     strcpy(ret->endpoint_str, endpoint_str);
     strcpy(ret->http_version, http_version_str);
+    if (ret->method == 0 || strlen(ret->endpoint_str) == 0 || strlen(ret->http_version) == 0) {
+        return -1;
+    }
 
 #ifdef DEBUG
     char d_method_str[HTTP_MAX_METHOD_STR] = {0};

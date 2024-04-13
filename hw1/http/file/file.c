@@ -21,3 +21,14 @@ int check_files_dir() {
 
     return 0;
 }
+
+/**
+ * Reads a target file and sends to that stream
+ * @param client_fd the client socket fd
+ * @param target the target file
+ * @param header the header string
+ * @return -1 if failure 0 if success
+ */
+int send_file(int client_fd, char* header, char* target) {
+
+}

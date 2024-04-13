@@ -17,4 +17,6 @@ extern struct context_t* ctx;
 
 int check_files_dir();
 
+int send_file(int, char*, char*);
+
 #endif //HW1_FILE_H

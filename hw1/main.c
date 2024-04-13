@@ -1,5 +1,6 @@
 #include "common/log.h"
 #include "common/context.h"
+#include "common/messages.h"
 #include "http/server.h"
 
 // @todo implement main
@@ -7,6 +8,8 @@
 struct context_t *ctx;
 
 int main(int argc, char* argv[]) {
+    printf("%s", title_msg);
+
     LOG_INFO("Initializing commandline arguments");
     if (init_ctx(&ctx, argc, argv) == -1) {
         return -1;
