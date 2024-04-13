@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "../../common/types.h"
 #include "../../common/defines.h"

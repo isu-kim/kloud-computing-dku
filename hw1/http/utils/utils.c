@@ -8,35 +8,32 @@
  */
 int parse_request_info(char *header_str, struct http_request_info_t *ret) {
     // Here comes painful string parsing in C
+    // I literally have no idea of this string thing, this got me stuck for like two more hours
+    char *header_copy_1 = strdup(header_str);
+    char *header_copy_3 = strdup(header_str);
+    if (header_copy_1 == NULL || header_copy_3 == NULL) {
+        return -1;
+    }
+
     char *basic_request = NULL;
-    basic_request = strtok(header_str, "\n");
+    basic_request = strtok(header_copy_1, "\n");
     if (basic_request == NULL) {
         return 0;
     }
 
 #ifdef DEBUG
-    LOG_DEBUG("parse_request_info: parsed %s", basic_request);
+    LOG_DEBUG("parse_request_info: parsed \"%s\"", basic_request);
 #endif
 
     char method_str[HTTP_MAX_METHOD_STR] = {0};
     char endpoint_str[HTTP_MAX_ENDPOINT_LEN] = {0};
     char http_version_str[HTTP_MAX_VERSION_STR] = {0};
 
-    char *tks[3] = {method_str, endpoint_str, http_version_str};
-    int lens[3] = {HTTP_MAX_METHOD_STR, HTTP_MAX_ENDPOINT_LEN, HTTP_MAX_VERSION_STR};
-
-    // split tokens, if this is not done properly, this will get us SEGFAULTs
-    int tkn_idx = 0;
-    for (char *tkn = strtok(basic_request, " ");
-         tkn != NULL && tkn_idx < 3;
-         tkn = strtok(NULL, " "), tkn_idx++) {
-
-        if (strlen(tkn) != 0) {
-            memcpy(tks[tkn_idx], tkn, lens[tkn_idx]);
-        }
+    if (basic_request != NULL && strlen(basic_request) != 0) {
+        sscanf(basic_request, "%s %s %s", method_str, endpoint_str, http_version_str);
     }
 
-    // convert
+    // convert string job
     ret->method = atom(method_str);
     strcpy(ret->endpoint_str, endpoint_str);
     strcpy(ret->http_version, http_version_str);
@@ -44,10 +41,16 @@ int parse_request_info(char *header_str, struct http_request_info_t *ret) {
         return -1;
     }
 
+    // parse content length
+    char *content_length_str = strstr(header_copy_3, "Content-Length:");
+    if (content_length_str != NULL && strlen(content_length_str) != 0) {
+        sscanf(content_length_str, "Content-Length: %ld", &(ret->content_size));
+    }
+
 #ifdef DEBUG
     char d_method_str[HTTP_MAX_METHOD_STR] = {0};
     mtoa(ret->method, (char *) d_method_str);
-    LOG_DEBUG("%s, %s, %s", d_method_str, ret->endpoint_str, ret->http_version);
+    LOG_DEBUG("Header info: %s, %s, %s, %ld", d_method_str, ret->endpoint_str, ret->http_version, ret->content_size);
 #endif
 
     return 0;

@@ -19,5 +19,6 @@ int check_files_dir();
 
 long get_file_size(char*);
 int read_file(char*, char*);
+int write_file(char*, char*, long*);
 
 #endif //HW1_FILE_H

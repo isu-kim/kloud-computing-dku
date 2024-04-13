@@ -46,9 +46,7 @@ long get_file_size(char *target) {
  * @param ret the buffer to store
  * @return -1 if any error, -2 if file size exceeds max limit, 0 if no error
  */
-
-int read_file(char* target, char* ret) {
-    // Open the file
+int read_file(char *target, char *ret) {
     FILE* file = fopen(target, "r");
     if (file == NULL) {
         LOG_ERROR("Unable to open file: %s", strerror((errno)));
@@ -68,6 +66,31 @@ int read_file(char* target, char* ret) {
     if (bytes_read != file_size) {
         fclose(file);
         LOG_ERROR("Unable to read file: %s", strerror((errno)));
+        return -1;
+    }
+
+    fclose(file);
+    return 0;
+}
+
+/**
+ * File write from buffer
+ * @param target the target file
+ * @param buff the buffer
+ * @param written written bytes
+ * @return -1 if failure 0 if success
+ */
+int write_file(char *target, char *buff, long *written){
+    FILE* file = fopen(target, "w+");
+    if (file == NULL) {
+        LOG_ERROR("Unable to open file: %s", strerror((errno)));
+        return -1;
+    }
+
+    *written = fprintf(file, "%s", buff);
+    if (*written < 0) {
+        LOG_ERROR("Error writing to file: %s", strerror(errno));
+        fclose(file);
         return -1;
     }
 

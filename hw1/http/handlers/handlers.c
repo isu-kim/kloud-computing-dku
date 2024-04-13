@@ -28,6 +28,7 @@ int send_response_message(int client_fd, int response_code, char *payload, char 
 
 /**
  * HTTP handler for GET
+ * @param client the client
  * @param req the request
  * @return -1 if failure, 0 if success
  */
@@ -89,6 +90,8 @@ int http_handler_get(struct client_info_t *client, struct http_request_info_t *r
                 sprintf(file_content, "Failed to open file %s properly: %s", target_file, strerror(errno));
                 ret = send_response_message(client->fd, response_code, file_content, file_type);
             }
+
+            free(file_content);
         }
     }
 
@@ -110,6 +113,87 @@ int http_handler_get(struct client_info_t *client, struct http_request_info_t *r
 
     return ret;
 }
+
+/**
+ * HTTP handler for POST
+ * @param client the client
+ * @param req the request
+ * @param buff the current buffer that the server received
+ * @param buff_size the buffer's size in bytes
+ * @return -1 if failure, 0 if success
+ */
+int http_handler_post(struct client_info_t *client, struct http_request_info_t *req, char *buff, long buff_size) {
+    int response_code = 0;
+    int ret = 0;
+
+    if (strcmp(req->endpoint_str, "/") == 0) { // shall be 200
+        response_code = 403;
+        char payload[MAX_STRING] = {0};
+        strcat(payload, title_msg);
+        strcat(payload, "You cannot overwrite this !");
+        ret = send_response_message(client->fd, response_code, payload, "text");
+    } else {
+        char target_file[MAX_FILE_NAME_STR_LEN] = {0};
+        strcpy(target_file, ctx->web_files_dir);
+        strcat(target_file, req->endpoint_str);
+#ifdef DEBUG
+        LOG_DEBUG("Writing file %s", target_file);
+#endif
+
+        if (IS_EXISTING_FILE(target_file)) { // file exists
+            response_code = 403;
+#ifdef DEBUG
+            LOG_DEBUG("File %s already exists", strerror(errno));
+#endif
+            char msg[] = "The file already exists, use UPDATE for updating the file :3";
+            ret = send_response_message(client->fd, response_code, msg, "text");
+        } else { // write file
+            if (req->content_size > HTTP_MAX_REQUEST_LEN) {
+                response_code = 413;
+                char msg[MAX_STRING] = {0};
+                sprintf(msg, "File size too big! Max size=%d bytes", HTTP_MAX_RESPONSE_LEN);
+
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            } else if (write_file(target_file, buff, &buff_size) != 0) {
+                response_code = 503;
+                LOG_ERROR("[Worker][%s:%d] Failed to write file %s (%ld bytes) %s",
+                          client->addr_str, client->port, target_file, buff_size, strerror(errno));
+                char msg[] = "Unable to write file check log";
+
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            } else {
+                response_code = 200;
+                LOG_INFO("[Worker][%s:%d] Successfully written file %s (%ld bytes)", client->addr_str, client->port,
+                         target_file, buff_size);
+                char msg[MAX_STRING] = {0};
+                sprintf(msg, "Successfully written file as %s: %ld bytes", target_file, buff_size);
+
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            }
+        }
+    }
+
+    // generate method str
+    char method_str[HTTP_MAX_METHOD_STR] = {0};
+    mtoa(req->method, (char *) method_str);
+
+    // log accordingly
+    if (response_code / 100 == 4) { // 4xx error
+        LOG_WARN("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                 method_str, req->endpoint_str, req->http_version);
+    } else if (response_code / 100 == 5) { // 5xx error
+        LOG_ERROR("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                  method_str, req->endpoint_str, req->http_version);
+    } else { // 200 ok
+        LOG_INFO("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                 method_str, req->endpoint_str, req->http_version);
+    }
+
+    return ret;
+}
+
+
+
 
 /**
  * Generate basic HTTP header
