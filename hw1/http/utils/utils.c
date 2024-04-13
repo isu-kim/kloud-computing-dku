@@ -21,16 +21,18 @@ int parse_request_info(char *header_str, struct http_request_info_t *ret) {
     char method_str[HTTP_MAX_METHOD_STR] = {0};
     char endpoint_str[HTTP_MAX_ENDPOINT_LEN] = {0};
     char http_version_str[HTTP_MAX_VERSION_STR] = {0};
+
     char *tks[3] = {method_str, endpoint_str, http_version_str};
+    int lens[3] = {HTTP_MAX_METHOD_STR, HTTP_MAX_ENDPOINT_LEN, HTTP_MAX_VERSION_STR};
 
     // split tokens, if this is not done properly, this will get us SEGFAULTs
     int tkn_idx = 0;
     for (char *tkn = strtok(basic_request, " ");
-         tkn != NULL || tkn_idx < 2;
+         tkn != NULL && tkn_idx < 3;
          tkn = strtok(NULL, " "), tkn_idx++) {
 
         if (strlen(tkn) != 0) {
-            strcpy(tks[tkn_idx], tkn);
+            memcpy(tks[tkn_idx], tkn, lens[tkn_idx]);
         }
     }
 

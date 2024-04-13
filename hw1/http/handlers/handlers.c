@@ -15,6 +15,7 @@ int send_response_message(int client_fd, int response_code, char *payload, char 
 
     generate_http_header(response_code, strlen(payload), response, type);
     strcat(response, payload);
+
 #ifdef DEBUG
     LOG_DEBUG("Response: %s", response);
 #endif
@@ -22,7 +23,7 @@ int send_response_message(int client_fd, int response_code, char *payload, char 
     ssize_t bytes = write(client_fd, response, strlen(response));
     free(response); // I wish we had defer here :(
 
-    return bytes >= 0;
+    return bytes < 0;
 }
 
 /**
@@ -32,13 +33,14 @@ int send_response_message(int client_fd, int response_code, char *payload, char 
  */
 int http_handler_get(struct client_info_t *client, struct http_request_info_t *req) {
     int response_code = 0;
+    int ret = 0;
 
     if (strcmp(req->endpoint_str, "/") == 0) { // shall be 200
         response_code = 200;
         char payload[MAX_STRING] = {0};
         strcat(payload, title_msg);
         strcat(payload, "\n\n    It works, engineX is running! :)   ");
-        send_response_message(client->fd, response_code, payload, "text");
+        ret = send_response_message(client->fd, response_code, payload, "text");
     } else {
         char target_file[MAX_FILE_NAME_STR_LEN] = {0};
         strcpy(target_file, ctx->web_files_dir);
@@ -52,11 +54,11 @@ int http_handler_get(struct client_info_t *client, struct http_request_info_t *r
             LOG_DEBUG("File %s does not exist: %s", target_file, strerror(errno));
 #endif
             char msg[] =  "Not found, we don't have that file :b";
-            send_response_message(client->fd, response_code, msg, "text");
+            ret = send_response_message(client->fd, response_code, msg, "text");
         } else if (!IS_AVAILABLE_FILE(target_file)) { // shall be 403
             response_code = 403;
             char msg[] = "Forbidden, guessing you don't have permissions :(";
-            send_response_message(client->fd, response_code, msg, "text");
+            ret = send_response_message(client->fd, response_code, msg, "text");
         } else { // read files
             long size = get_file_size(target_file);
             char *file_content = (char *)malloc(sizeof(char) * size);
@@ -77,15 +79,15 @@ int http_handler_get(struct client_info_t *client, struct http_request_info_t *r
             // check stats
             if (ret == 0) { // success
                 response_code = 200;
-                send_response_message(client->fd, response_code, file_content, file_type);
+                ret = send_response_message(client->fd, response_code, file_content, file_type);
             } else if (ret == -2) { // too big
                 response_code = 413;
                 sprintf(file_content, "File size too big! Max size=%d bytes", HTTP_MAX_RESPONSE_LEN);
-                send_response_message(client->fd, response_code, file_content, file_type);
+                ret = send_response_message(client->fd, response_code, file_content, file_type);
             } else { // file open failed
                 response_code = 503;
                 sprintf(file_content, "Failed to open file %s properly: %s", target_file, strerror(errno));
-                send_response_message(client->fd, response_code, file_content, file_type);
+                ret = send_response_message(client->fd, response_code, file_content, file_type);
             }
         }
     }
@@ -106,7 +108,7 @@ int http_handler_get(struct client_info_t *client, struct http_request_info_t *r
                 method_str, req->endpoint_str, req->http_version);
     }
 
-    return 0;
+    return ret;
 }
 
 /**
