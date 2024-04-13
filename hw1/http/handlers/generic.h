@@ -4,4 +4,6 @@
 
 // @todo implement polymorphism with fp
 
+
+
 #endif //HW1_GENERIC_H

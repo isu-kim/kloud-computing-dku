@@ -8,10 +8,12 @@
 #include <stdio.h>
 
 #include "types.h"
+#include "log.h"
 
 struct context_t {
     uint16_t port;
     char address[MAX_IP_STRING];
+    char web_files_dir[MAX_STRING];
 };
 
 int init_ctx(struct context_t **ctx, int argc, char** argv);

@@ -2,12 +2,15 @@
 #define HW1_SERVER_H
 #pragma once
 
+#include <arpa/inet.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 
 #include "../common/log.h"
-#include "../commmon/context.h"
+#include "../common/context.h"
+
+#include "file/file.h"
 
 // @todo implement basic socket programming with multi threading
 // @todo implement callback function

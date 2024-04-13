@@ -15,5 +15,8 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Initialized arguments");
     dump_ctx(*ctx);
 
+    LOG_INFO("Starting server...");
+    serve();
+
 	return 0;
 }

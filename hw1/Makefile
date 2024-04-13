@@ -26,4 +26,4 @@ $(PROG): $(OBJ)
 
 clean:
 	rm -rf $(PROG) $(OBJ)
-
+	rm -rf web/
