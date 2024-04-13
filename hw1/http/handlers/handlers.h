@@ -17,6 +17,7 @@ extern struct context_t *ctx;
 
 int http_handler_get(struct client_info_t*, struct http_request_info_t*);
 int http_handler_post(struct client_info_t*, struct http_request_info_t*, char*, long);
+int http_handler_update(struct client_info_t*, struct http_request_info_t*, char*, long);
 
 int generate_http_header(int, unsigned long, char*, char*);
 int send_response_message(int, int, char*, char*);

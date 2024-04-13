@@ -45,6 +45,7 @@ void* worker_func(void *target) {
                   client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version);
 #endif
 
+        int ret = 0;
         switch (req.method) {
             case http_req_get:
                 http_handler_get(client_info, &req);
@@ -57,7 +58,7 @@ void* worker_func(void *target) {
                           client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version);
 #endif
                 memset(buff, 0x00, HTTP_MAX_REQUEST_LEN);
-                int ret = read(client_info->fd, buff, req.content_size > HTTP_MAX_REQUEST_LEN ? HTTP_MAX_REQUEST_LEN : req.content_size);
+                ret = read(client_info->fd, buff, req.content_size > HTTP_MAX_REQUEST_LEN ? HTTP_MAX_REQUEST_LEN : req.content_size);
 #ifdef DEBUG
                 LOG_DEBUG("[Worker][%s:%d] %s %s %s read %s (%ld)",
                           client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version,
@@ -65,6 +66,23 @@ void* worker_func(void *target) {
 #endif
 
                 http_handler_post(client_info, &req, buff, req.content_size);
+                break;
+            case http_req_update:
+#ifdef DEBUG
+                char method_str[HTTP_MAX_METHOD_STR] = {0};
+                mtoa(req.method, (char *) method_str);
+                LOG_DEBUG("[Worker][%s:%d] %s %s %s reading extra payload",
+                          client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version);
+#endif
+                memset(buff, 0x00, HTTP_MAX_REQUEST_LEN);
+                ret = read(client_info->fd, buff, req.content_size > HTTP_MAX_REQUEST_LEN ? HTTP_MAX_REQUEST_LEN : req.content_size);
+#ifdef DEBUG
+                LOG_DEBUG("[Worker][%s:%d] %s %s %s read %s (%ld)",
+                          client_info->addr_str, client_info->port, method_str, req.endpoint_str, req.http_version,
+                          buff, req.content_size);
+#endif
+
+                http_handler_update(client_info, &req, buff, req.content_size);
                 break;
         }
     }

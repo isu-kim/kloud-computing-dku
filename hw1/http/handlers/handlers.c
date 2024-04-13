@@ -193,6 +193,88 @@ int http_handler_post(struct client_info_t *client, struct http_request_info_t *
 }
 
 
+/**
+ * HTTP handler for UPDATE
+ * @param client the client
+ * @param req the request
+ * @param buff the current buffer that the server received
+ * @param buff_size the buffer's size in bytes
+ * @return -1 if failure, 0 if success
+ */
+int http_handler_update(struct client_info_t *client, struct http_request_info_t *req, char *buff, long buff_size) {
+    int response_code = 0;
+    int ret = 0;
+
+    if (strcmp(req->endpoint_str, "/") == 0) { // shall be 200
+        response_code = 403;
+        char payload[MAX_STRING] = {0};
+        strcat(payload, title_msg);
+        strcat(payload, "You cannot update this !");
+        ret = send_response_message(client->fd, response_code, payload, "text");
+    } else {
+        char target_file[MAX_FILE_NAME_STR_LEN] = {0};
+        strcpy(target_file, ctx->web_files_dir);
+        strcat(target_file, req->endpoint_str);
+#ifdef DEBUG
+        LOG_DEBUG("Updating file %s", target_file);
+#endif
+
+        if (!IS_EXISTING_FILE(target_file)) { // shall be 404
+            response_code = 404;
+#ifdef DEBUG
+            LOG_DEBUG("File %s does not exist: %s", target_file, strerror(errno));
+#endif
+            char msg[] =  "Not found, we don't have that file :b";
+            ret = send_response_message(client->fd, response_code, msg, "text");
+        } else if (!IS_AVAILABLE_FILE(target_file)) { // shall be 403
+            response_code = 403;
+            char msg[] = "Forbidden, guessing you don't have permissions :(";
+            ret = send_response_message(client->fd, response_code, msg, "text");
+        } else {
+            long old_size = get_file_size(target_file);
+            if (req->content_size > HTTP_MAX_REQUEST_LEN) {
+                response_code = 413;
+                char msg[MAX_STRING] = {0};
+                sprintf(msg, "File size too big! Max size=%d bytes", HTTP_MAX_RESPONSE_LEN);
+
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            } else if (write_file(target_file, buff, &buff_size) != 0) {
+                response_code = 503;
+                LOG_ERROR("[Worker][%s:%d] Failed to write file %s (%ld bytes) %s",
+                          client->addr_str, client->port, target_file, buff_size, strerror(errno));
+                char msg[] = "Unable to update file, check log";
+
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            } else {
+                response_code = 200;
+                LOG_INFO("[Worker][%s:%d] Successfully written file %s (%ld bytes)", client->addr_str, client->port,
+                         target_file, buff_size);
+                char msg[MAX_STRING] = {0};
+                sprintf(msg, "Successfully updated file %s %ld->%ld bytes", target_file, old_size, buff_size);
+
+                ret = send_response_message(client->fd, response_code, msg, "text");
+            }
+        }
+    }
+
+    // generate method str
+    char method_str[HTTP_MAX_METHOD_STR] = {0};
+    mtoa(req->method, (char *) method_str);
+
+    // log accordingly
+    if (response_code / 100 == 4) { // 4xx error
+        LOG_WARN("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                 method_str, req->endpoint_str, req->http_version);
+    } else if (response_code / 100 == 5) { // 5xx error
+        LOG_ERROR("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                  method_str, req->endpoint_str, req->http_version);
+    } else { // 200 ok
+        LOG_INFO("[Worker][%s:%d][%d] %s %s %s", client->addr_str, client->port, response_code,
+                 method_str, req->endpoint_str, req->http_version);
+    }
+
+    return ret;
+}
 
 
 /**
