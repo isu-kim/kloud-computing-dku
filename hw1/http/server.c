@@ -20,6 +20,7 @@ int serve() {
     ret = bind(listen_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (ret == -1) {
         LOG_ERROR("Fail to bind: %s", (const char *) strerror(errno));
+        return -1;
     }
 
     ret = listen(listen_fd, MAX_CONNECTIONS);
@@ -30,5 +31,35 @@ int serve() {
 
     check_files_dir();
     LOG_INFO("Listening on %s:%d", ctx->address, ctx->port);
+
+    struct sockaddr_in client_addr = {0};
+    char ip_str[MAX_IP_STRING] = {0};
+
+    while(1) {
+        socklen_t client_addr_len = sizeof(client_addr);
+        int client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+        inet_ntop(AF_INET, &(client_addr.sin_addr), ip_str, INET_ADDRSTRLEN);
+
+        if(client_fd == -1) {
+            LOG_WARN("Unable to accept connection: %s", strerror(errno));
+            continue;
+        } else {
+            LOG_INFO("[%s:%d] New connection, assigning a new worker process", ip_str, client_addr.sin_port);
+
+            // Create client struct
+            struct client_info_t *client = NULL;
+            client = (struct client_info_t *)malloc(sizeof(struct client_info_t));
+            client->fd = client_fd;
+            client->port = client_addr.sin_port;
+            memcpy(client->addr_str, ip_str, MAX_IP_STRING);
+
+            if (spawn_worker_thread(client) != 0) {
+                LOG_ERROR("[%s:%d] Unable to handle connection properly: %s",
+                          client->addr_str, client->port, strerror(errno));
+                continue;
+            }
+        }
+    }
+
     return 0;
 }

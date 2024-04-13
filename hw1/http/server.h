@@ -9,7 +9,7 @@
 
 #include "../common/log.h"
 #include "../common/context.h"
-
+#include "workers/thread.h"
 #include "file/file.h"
 
 // @todo implement basic socket programming with multi threading

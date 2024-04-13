@@ -29,6 +29,6 @@
 #define LOG_INFO(...) LOG_COMMON(KGRN, "INFO", __VA_ARGS__)
 #define LOG_WARN(...) LOG_COMMON(KYEL, "WARN", __VA_ARGS__)
 #define LOG_ERROR(...) LOG_COMMON(KRED, "ERROR", __VA_ARGS__)
-
+#define LOG_DEBUG(...) LOG_COMMON(KCYN, "DEBUG", __VA_ARGS__)
 
 #endif //HW1_LOG_H

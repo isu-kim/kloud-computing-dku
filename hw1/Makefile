@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -O2 -Wall -std=gnu99
-LDFLAGS =
+LDFLAGS = -lpthread
 
 PROG = engineX
 
